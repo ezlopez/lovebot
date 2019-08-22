@@ -60,6 +60,7 @@ if __name__ == '__main__':
         
         # Output to the screen
         if section[0] == 'text':
+            screen.setStorageArea(WSePaper.STORAGE_NAND)
             screen.showText(section[1], x, y)
         elif section[0] == 'image':
             pass

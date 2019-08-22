@@ -123,7 +123,7 @@ class LoveBot(sleekxmpp.ClientXMPP):
                               'reboot\n'
                               'bash: <command>\n'
                               'message: [(<image-cmd>)(,<text-cmd> ...)]\n'
-                              'image: <url>\n'
+                              'image: <url> <image-name>\n'
                               'syntax: [image or message]').send()
                         
     def execute_command(self, command, msg=None):

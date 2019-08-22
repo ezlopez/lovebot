@@ -1,4 +1,5 @@
 import serial
+
 from time import sleep
 
 class WSePaper(object):
@@ -14,6 +15,9 @@ class WSePaper(object):
     FONT_MED   = b'\x02'
     FONT_LARGE = b'\x03'
     
+    STORAGE_NAND = b'\x00'
+    STORAGE_SD  = b'\x01'
+    
     commands = {'handshake':      b'\x00', 'setBaud':        b'\x01',
                 'getBaud':        b'\x02', 'getStorageArea': b'\x06',
                 'setStorageArea': b'\x07', 'sleep':          b'\x08',
@@ -26,7 +30,8 @@ class WSePaper(object):
                 'drawRect':       b'\x25', 'drawCircle':     b'\x26',
                 'fillCircle':     b'\x27', 'drawTriangle':   b'\x28',
                 'fillTriangle':   b'\x29', 'clearScreen':    b'\x2E',
-                'showText':       b'\x30', 'showImage':      b'\x70'}
+                'showText':       b'\x30', 'showImage':      b'\x70',
+                'sendFile':       b'\x40'}
     
     def __init__(self):
         self.serial = serial.Serial('/dev/ttyS0', 115200, timeout=1)
@@ -73,18 +78,26 @@ class WSePaper(object):
                     return message
         else:
             print('Serial line is not open')
+            return None
     
     def sendHandshake(self):
         packet = self.formatMessage(self.commands['handshake'])
         self.sendMessage(packet)
         return self.recvMessage()
     
-    def showText(self, text, xCoord, yCoord):
+    def showText(self, text, xCoord=0, yCoord=0):
         data  = xCoord.to_bytes(2, byteorder='big') + yCoord.to_bytes(2, byteorder='big')
         data += text.encode('utf-8') + b'\x00'
         packet = self.formatMessage(self.commands['showText'], data)
         self.sendMessage(packet)
         return self.recvMessage()
+    
+    def showImage(self, image, xCoord=0, yCoord=0):
+        data  = xCoord.to_bytes(2, byteorder='big') + yCoord.to_bytes(2, byteorder='big')
+        data += image.encode('utf-8') + b'\x00'
+        packet = self.formatMessage(self.commands['showImage'], data)
+        self.sendMessage(packet)
+        return 'OK' in self.recvMessage()
         
     def setFontSize(self, size):
         packet = self.formatMessage(self.commands['setFontSize'], size)
@@ -99,3 +112,60 @@ class WSePaper(object):
     def update(self):
         packet = self.formatMessage(self.commands['refreshDisplay'])
         self.sendMessage(packet)
+        
+    def getStorageArea(self):
+        packet = self.formatMessage(self.commands['getStorageArea'])
+        self.sendMessage(packet)
+        return self.recvMessage()
+        
+    def setStorageArea(self, storage_area):
+        packet = self.formatMessage(self.commands['setStorageArea'], storage_area)
+        self.sendMessage(packet)
+        return 'OK' in self.recvMessage()
+    
+    def sendImageFile(self, image_path):
+        # Get the file data first
+        with open(image_path, 'rb') as file:
+            file_data = file.read()
+            
+        file_len = str(len(file_data))
+        file_cs = str(self.calcChecksum(file_data).hex())
+        
+        # Send the initiating message
+        image_name = image_path.split('/')[-1]
+        data = image_name.encode('utf-8') + b'\x00'
+        packet = self.formatMessage(self.commands['sendFile'], data)
+        self.sendMessage(packet)
+        while True:
+            if self.recvMessage():
+                break
+        
+        # Send the file data
+        self.sendMessage(file_data)
+        sleep(1.1)
+        
+        # Confirm a proper transmission
+        confirm = self.recvMessage().split('\r\n')
+        if file_len not in confirm[0] or file_cs not in confirm[1]:
+            self.sendMessage('n'.encode('utf-8'))
+        else:
+            self.sendMessage('y'.encode('utf-8'))
+            
+        return 'File was created into the SD card' in self.recvMessage()
+        
+if __name__ == '__main__':
+    screen = WSePaper()
+
+    if screen.sendHandshake() != 'OK':
+        print('Screen did not perform handshake.')
+        exit(-1)
+        
+    screen.clear()
+    
+    print(screen.setStorageArea(WSePaper.STORAGE_SD))
+    print(screen.getStorageArea())
+    
+    print(screen.showImage('PIC2.BMP'))
+    screen.update()
+    
+    print(screen.sendImageFile('/home/pi/te-amo/images/PIC2.BMP'))
