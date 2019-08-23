@@ -8,6 +8,7 @@ import sleekxmpp
 import urllib.request
 import subprocess
 import os.path
+import os
 import time
 import schedule
 import ast
@@ -68,8 +69,15 @@ class LoveBot(sleekxmpp.ClientXMPP):
                 
                 elif command == 'kill':
                     msg.reply('Killing process').send()
-                    exit(0)
-                
+                    time.sleep(1)
+                    os.system('kill $PPID')
+                    
+                elif command == 'manual update':
+                    self.execute_command('git -C /home/pi/te-amo/source pull origin master', msg)
+                    msg.reply('Killing process').send()
+                    time.sleep(1)
+                    os.system('kill $PPID')
+                    
                 elif command == 'message':
                     if self.valid_message(parameter):
                         filename = '/home/pi/te-amo/messages/' + time.strftime('%Y%m%d-%H%M%S') + '.txt'
@@ -125,6 +133,7 @@ class LoveBot(sleekxmpp.ClientXMPP):
                               'ping\n'
                               'reboot\n'
                               'kill\n'
+                              'manual update\n'
                               'bash: <command>\n'
                               'message: [(<image-cmd>)(,<text-cmd> ...)]\n'
                               'image: <url> <image-name>\n'
