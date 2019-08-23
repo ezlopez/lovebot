@@ -97,7 +97,9 @@ class WSePaper(object):
         data += image.encode('utf-8') + b'\x00'
         packet = self.formatMessage(self.commands['showImage'], data)
         self.sendMessage(packet)
-        return 'OK' in self.recvMessage()
+        recv_packet = self.recvMessage()
+        print(recv_packet)
+        return 'OK' in recv_packet
         
     def setFontSize(self, size):
         packet = self.formatMessage(self.commands['setFontSize'], size)
@@ -150,8 +152,11 @@ class WSePaper(object):
             self.sendMessage('n'.encode('utf-8'))
         else:
             self.sendMessage('y'.encode('utf-8'))
-            
-        return 'File was created into the SD card' in self.recvMessage()
+
+
+        recv_packet = self.recvMessage()
+        print(recv_packet)
+        return 'File was created into the SD card' in recv_packet
         
 if __name__ == '__main__':
     screen = WSePaper()
