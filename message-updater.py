@@ -67,7 +67,7 @@ if __name__ == '__main__':
         elif section[0] == 'image':
             image_file_path = image_path + section[1]
             if os.path.isfile(image_file_path):
-                screen.showText(image_file_path, x, y)
+                screen.showImage(image_file_path, x, y)
             else:
                 print('Error: Image does not exist.')
                 exit()
