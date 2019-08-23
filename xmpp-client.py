@@ -137,6 +137,7 @@ class LoveBot(sleekxmpp.ClientXMPP):
                               'reboot\n'
                               'kill\n'
                               'manual update\n'
+                              'random message\n'
                               'bash: <command>\n'
                               'message: [(<image-cmd>)(,<text-cmd> ...)]\n'
                               'image: <url> <image-name>\n'
