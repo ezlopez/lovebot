@@ -67,7 +67,8 @@ class LoveBot(sleekxmpp.ClientXMPP):
                     raise KeyboardInterrupt
                 
                 elif command == 'kill':
-                    raise KeyboardInterrupt
+                    msg.reply('Killing process').send()
+                    exit(0)
                 
                 elif command == 'message':
                     if self.valid_message(parameter):
