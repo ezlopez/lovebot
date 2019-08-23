@@ -78,6 +78,9 @@ class LoveBot(sleekxmpp.ClientXMPP):
                     time.sleep(1)
                     os.system('kill $PPID')
 
+                elif command == 'random message':
+                    self.execute_command('python3 /home/pi/te-amo/source/message-updater.py', msg)
+
                 elif command == 'message':
                     if self.valid_message(parameter):
                         filename = '/home/pi/te-amo/messages/' + time.strftime('%Y%m%d-%H%M%S') + '.txt'
