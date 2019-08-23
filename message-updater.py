@@ -64,12 +64,13 @@ if __name__ == '__main__':
         if section[0] == 'text':
             screen.setStorageArea(WSePaper.STORAGE_NAND)
             screen.showText(section[1], x, y)
+            
         elif section[0] == 'image':
             image_file_path = image_path + section[1]
             if os.path.isfile(image_file_path):
-                if not screen.showImage(image_file_path, x, y):
+                if not screen.showImage(section[1], x, y):
                     screen.sendImageFile(image_file_path)
-                    if not screen.showImage(image_file_path, x, y):
+                    if not screen.showImage(section[1], x, y):
                         print('Error: Could not show image.')
                         exit()
             else:
