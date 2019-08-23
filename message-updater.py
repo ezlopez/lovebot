@@ -25,7 +25,6 @@ if __name__ == '__main__':
         exit(-1)
         
     screen.clear()
-    screen.setFontSize(WSePaper.FONT_LARGE)
     
     # Get the files in the messages directory
     files = glob.glob(message_path + '/*.txt')
@@ -41,6 +40,10 @@ if __name__ == '__main__':
     message_text = message.read()
     message.close()
     message_list = ast.literal_eval(message_text)
+    
+    # Set the font if we have text
+    if 'text' in message_text:
+        screen.setFontSize(WSePaper.FONT_LARGE)
     
     # Display the message contents
     for section in message_list:
@@ -63,15 +66,19 @@ if __name__ == '__main__':
         # Output to the screen
         if section[0] == 'text':
             screen.setStorageArea(WSePaper.STORAGE_NAND)
+            print('showText ' + section[1], x, y)
             screen.showText(section[1], x, y)
             
         elif section[0] == 'image':
             image_file_path = image_path + section[1]
             if os.path.isfile(image_file_path):
+                screen.setStorageArea(WSePaper.STORAGE_SD)
+                print('showImage ' + section[1], x, y)
                 if not screen.showImage(section[1], x, y):
-                    screen.sendImageFile(image_file_path)
-                    if not screen.showImage(section[1], x, y):
-                        print('Error: Could not show image.')
+                    if not screen.sendImageFile(image_file_path):
+                        print('Error: Could not send image: ' + image_file_path)
+                    elif not screen.showImage(section[1], x, y):
+                        print('Error: Could not show image: ' + section[1])
                         exit()
             else:
                 print('Error: Image does not exist.')

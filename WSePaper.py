@@ -62,9 +62,12 @@ class WSePaper(object):
     
     def sendMessage(self, message):
         if self.serial:
-            self.serial.write(message)
+            bytes_written = self.serial.write(message)
+            if bytes_written != len(message):
+                print('Error: Not all bytes written to display.')
         else:
             print('Serial line is not open')
+        sleep(1)
             
     def recvMessage(self):
         if self.serial:
@@ -97,9 +100,13 @@ class WSePaper(object):
         data += image.encode('utf-8') + b'\x00'
         packet = self.formatMessage(self.commands['showImage'], data)
         self.sendMessage(packet)
+        
         recv_packet = self.recvMessage()
-        print(recv_packet)
-        return 'OK' in recv_packet
+        if 'OK' in recv_packet:
+            return True
+        else:
+            print(recv_packet)
+            return False
         
     def setFontSize(self, size):
         packet = self.formatMessage(self.commands['setFontSize'], size)
@@ -130,33 +137,45 @@ class WSePaper(object):
         with open(image_path, 'rb') as file:
             file_data = file.read()
             
-        file_len = str(len(file_data))
-        file_cs = str(self.calcChecksum(file_data).hex())
+        file_len = 'File size: ' + str(len(file_data))
+        file_cs =  'Xor check: ' + str(self.calcChecksum(file_data).hex()).upper()
         
         # Send the initiating message
         image_name = image_path.split('/')[-1]
         data = image_name.encode('utf-8') + b'\x00'
         packet = self.formatMessage(self.commands['sendFile'], data)
         self.sendMessage(packet)
+        
         while True:
-            if self.recvMessage():
+            recv_packet = self.recvMessage()
+            if recv_packet:
+                #print(recv_packet)
                 break
         
         # Send the file data
+        print('Sending the file to display')
         self.sendMessage(file_data)
-        sleep(1.1)
+        print('Done')
+        sleep(1)
         
         # Confirm a proper transmission
-        confirm = self.recvMessage().split('\r\n')
-        if file_len not in confirm[0] or file_cs not in confirm[1]:
+        confirm = self.recvMessage()
+        #print(file_len, file_cs)
+        #print(confirm)
+        if file_len not in confirm or file_cs not in confirm:
+            print('Error: Bad file size or checksum.')
             self.sendMessage('n'.encode('utf-8'))
         else:
             self.sendMessage('y'.encode('utf-8'))
 
-
-        recv_packet = self.recvMessage()
-        print(recv_packet)
-        return 'File was created into the SD card' in recv_packet
+        for retries in range(0, 3):
+            recv_packet = self.recvMessage()        
+            if 'File creation aborted.' in recv_packet:
+                return False
+            if 'File was created into the SD card' in recv_packet:
+                return True
+            
+        return False
         
 if __name__ == '__main__':
     screen = WSePaper()
@@ -170,7 +189,9 @@ if __name__ == '__main__':
     print(screen.setStorageArea(WSePaper.STORAGE_SD))
     print(screen.getStorageArea())
     
-    print(screen.showImage('PIC2.BMP'))
+    print('showImage', screen.showImage('HOTDOG.BMP'))
     screen.update()
     
-    print(screen.sendImageFile('/home/pi/te-amo/images/PIC2.BMP'))
+    while True:
+        if screen.sendImageFile('/home/pi/te-amo/images/HOTDOG.BMP'):
+            break
