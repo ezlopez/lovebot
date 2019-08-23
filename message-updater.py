@@ -2,12 +2,14 @@ import os
 import ast
 import glob
 import random
+import os.path
 
 from WSePaper import WSePaper
 from optparse import OptionParser
 from pprint import pprint
 
 message_path = '/home/pi/te-amo/messages'
+image_path = '/home/pi/te-amo/images/'
 
 if __name__ == '__main__':
     optp = OptionParser()
@@ -63,7 +65,12 @@ if __name__ == '__main__':
             screen.setStorageArea(WSePaper.STORAGE_NAND)
             screen.showText(section[1], x, y)
         elif section[0] == 'image':
-            pass
+            image_file_path = image_path + section[1]
+            if os.path.isfile(image_file_path):
+                screen.showText(image_file_path, x, y)
+            else:
+                print('Error: Image does not exist.')
+                exit()
         else:
             pass #error
         
