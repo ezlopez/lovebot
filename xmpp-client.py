@@ -66,8 +66,10 @@ class LoveBot(sleekxmpp.ClientXMPP):
                     self.execute_command('sudo shutdown -r', msg)
                     raise KeyboardInterrupt
                 
+                elif command == 'kill':
+                    raise KeyboardInterrupt
+                
                 elif command == 'message':
-                    
                     if self.valid_message(parameter):
                         filename = '/home/pi/te-amo/messages/' + time.strftime('%Y%m%d-%H%M%S') + '.txt'
                         file = open(filename, 'w+')
@@ -121,6 +123,7 @@ class LoveBot(sleekxmpp.ClientXMPP):
                     msg.reply('\nip\n'
                               'ping\n'
                               'reboot\n'
+                              'kill\n'
                               'bash: <command>\n'
                               'message: [(<image-cmd>)(,<text-cmd> ...)]\n'
                               'image: <url> <image-name>\n'
